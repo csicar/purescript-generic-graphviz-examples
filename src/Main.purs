@@ -3,10 +3,10 @@ module Main where
 import Control.Monad.Eff (Eff)
 import Control.Semigroupoid ((>>>))
 import Data.Array (range)
-import Data.DotLang (class DotR)
+import Data.DotLang (class GraphRepr, toGraph)
 import Data.Foldable (foldr)
 import Data.Generic.Rep (class Generic)
-import Data.GenericGraph (class Edges, genericEdges, genericToDot)
+import Data.GenericGraph (class Edges, genericEdges, genericToGraph)
 import Data.Semigroup ((<>))
 import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Global (encodeURIComponent)
@@ -19,14 +19,6 @@ import Pux.Renderer.React (renderToDOM)
 import Text.Smolder.HTML (button, div, img, pre, span)
 import Text.Smolder.HTML.Attributes (src)
 import Text.Smolder.Markup (text, (!), (#!))
-
---Simple
-data Simple = A | B
-
-derive instance genericSimple :: Generic Simple _
-instance simpleToDot :: DotR Simple where toDot = genericToDot
-
-instance simpleEdges :: Edges Simple where edges =  genericEdges
 
 --List
 data List' a = Nil | Cons' a (List' a)
@@ -51,8 +43,6 @@ foldp :: ∀ fx. Event -> State -> EffModel State Event fx
 foldp Increment n = { state: n + 1, effects: [] }
 foldp Decrement n = { state: n - 1, effects: [] }
 
-stuffify d = encodeURIComponent $ renderToSvg  Dot $ genericToDot d
-
 -- | Return markup from the state
 view :: State -> HTML Event
 view count =
@@ -62,7 +52,7 @@ view count =
       span $ text (show count)
       button #! onClick (const Decrement) $ text "Decrement"
     div do
-      img ! src ("data:image/svg+xml;charset=utf8," <> stuffify (fromInt count))
+      img ! src ("data:image/svg+xml;charset=utf8," <> (encodeURIComponent $ renderToSvg Dot $ genericToGraph $fromInt count))
 
 -- | Start and render the app
 main :: ∀ fx. Eff (CoreEffects fx) Unit
